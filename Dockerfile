@@ -1,25 +1,25 @@
-FROM docker.io/library/php:8-apache
+dockerfile
+FROM ubuntu:22.04
 
-LABEL org.opencontainers.image.source=https://github.com/digininja/DVWA
-LABEL org.opencontainers.image.description="DVWA pre-built image."
-LABEL org.opencontainers.image.licenses="gpl-3.0"
+ENV DEBIAN_FRONTEND=noninteractive
 
-WORKDIR /var/www/html
+RUN apt update && apt install -y \
+    apache2 php php-mysqli php-gd libapache2-mod-php \
+    mariadb-server mariadb-client \
+    && rm -rf /var/lib/apt/lists/*
 
-# https://www.php.net/manual/en/image.installation.php
-RUN apt-get update \
- && export DEBIAN_FRONTEND=noninteractive \
- && apt-get install -y zlib1g-dev libpng-dev libjpeg-dev libfreetype6-dev iputils-ping git zip unzip 7zip  \
- && apt-get clean -y && rm -rf /var/lib/apt/lists/* \
- && docker-php-ext-configure gd --with-jpeg --with-freetype \
- && a2enmod rewrite \
- # Use pdo_sqlite instead of pdo_mysql if you want to use sqlite
- && docker-php-ext-install gd mysqli pdo pdo_mysql
+COPY . /var/www/html/DVWA/
+RUN chown -R www-data:www-data /var/www/html/DVWA
 
-COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer
-COPY --chown=www-data:www-data . .
-COPY --chown=www-data:www-data config/config.inc.php.dist config/config.inc.php
+RUN sed -i 's/allow_url_fopen = Off/allow_url_fopen = On/' /etc/php/*/apache2/php.ini \
+    && sed -i 's/allow_url_include = Off/allow_url_include = On/' /etc/php/*/apache2/php.ini
 
-# This is configuring the stuff for the API
-RUN cd /var/www/html/vulnerabilities/api \
- && composer install \
+RUN sed -i 's|/var/www/html|/var/www/html/DVWA|g' /etc/apache2/sites-available/000-default.conf \
+    && sed -i 's|/var/www/html|/var/www/html/DVWA|g' /etc/apache2/sites-available/default-ssl.conf
+
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+
+EXPOSE $PORT
+
+CMD ["/start.sh"]
