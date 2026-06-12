@@ -13,8 +13,7 @@ RUN chown -R www-data:www-data /var/www/html/DVWA
 RUN sed -i 's/allow_url_fopen = Off/allow_url_fopen = On/' /etc/php/*/apache2/php.ini \
     && sed -i 's/allow_url_include = Off/allow_url_include = On/' /etc/php/*/apache2/php.ini
 
-RUN sed -i 's|/var/www/html|/var/www/html/DVWA|g' /etc/apache2/sites-available/000-default.conf \
-    && sed -i 's|/var/www/html|/var/www/html/DVWA|g' /etc/apache2/sites-available/default-ssl.conf
+RUN sed -i 's|/var/www/html|/var/www/html/DVWA|g' /etc/apache2/sites-available/000-default.conf
 
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
